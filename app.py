@@ -13,20 +13,15 @@ LANGUAGES = {
     # Add more languages if needed
 }
 
-# Cache for loaded models
-model_cache = {}
-
 def get_model_name(src_lang, tgt_lang):
     return f"Helsinki-NLP/opus-mt-{src_lang}-{tgt_lang}"
 
 def load_model(src_lang, tgt_lang):
-    key = f"{src_lang}-{tgt_lang}"
-    if key not in model_cache:
-        model_name = get_model_name(src_lang, tgt_lang)
-        tokenizer = MarianTokenizer.from_pretrained(model_name)
-        model = MarianMTModel.from_pretrained(model_name)
-        model_cache[key] = (tokenizer, model)
-    return model_cache[key]
+    model_name = f"Helsinki-NLP/opus-mt-{src_lang}-{tgt_lang}"
+    tokenizer = MarianTokenizer.from_pretrained(model_name)
+    model = MarianMTModel.from_pretrained(model_name)
+    return tokenizer, model
+
 
 @app.route("/")
 def home():
