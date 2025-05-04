@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Language Translator with Voice</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-100 to-blue-300 flex items-center justify-center p-4">
+
+  <div class="bg-white shadow-xl rounded-2xl max-w-3xl w-full p-8 space-y-6">
+    <h1 class="text-3xl font-bold text-center text-blue-700">🌍 Language Translator with Voice</h1>
+
+    <!-- Language Select -->
+    <div class="grid md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Source Language:</label>
+        <select id="srcLang" class="w-full p-2 border border-gray-300 rounded-md">
+          {% for code, name in languages.items() %}
+            <option value="{{ code }}">{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Target Language:</label>
+        <select id="tgtLang" class="w-full p-2 border border-gray-300 rounded-md">
+          {% for code, name in languages.items() %}
+            <option value="{{ code }}">{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div>
+      <label class="block text-sm font-semibold text-gray-700 mb-1">Enter Text:</label>
+      <textarea id="inputText" rows="4" placeholder="Type text here..." class="w-full p-3 border border-gray-300 rounded-md resize-none"></textarea>
+    </div>
+
+    <!-- Translate Button -->
+    <button onclick="translateText()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md font-bold transition">
+      Translate
+    </button>
+
+    <!-- Output -->
+    <div class="bg-gray-50 p-4 rounded-md">
+      <label class="block text-sm font-semibold text-gray-700 mb-2">Translated Text:</label>
+      <p id="outputText" class="text-gray-800 min-h-[60px]"></p>
+    </div>
+
+    <!-- Voice Select -->
+    <div>
+      <label class="block text-sm font-semibold text-gray-700 mb-1">Choose Voice:</label>
+      <select id="voiceSelect" class="w-full p-2 border border-gray-300 rounded-md"></select>
+    </div>
+
+    <!-- Controls -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+      <button onclick="speakText()" class="bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md">🔊 Speak</button>
+      <button onclick="pauseSpeech()" class="bg-yellow-400 hover:bg-yellow-500 text-white py-2 rounded-md">⏸ Pause</button>
+      <button onclick="resumeSpeech()" class="bg-green-500 hover:bg-green-600 text-white py-2 rounded-md">▶ Resume</button>
+      <button onclick="stopSpeech()" class="bg-red-500 hover:bg-red-600 text-white py-2 rounded-md">⏹ Stop</button>
+    </div>
+
+    <p id="speakingStatus" class="text-sm italic text-gray-600 mt-2"></p>
+  </div>
+
+  <script>
+    let voices = [];
+    const synth = window.speechSynthesis;
+
+    function populateVoiceList() {
+      voices = synth.getVoices().filter(v => v.lang.includes('en') || v.lang.includes('hi') || v.lang.includes('fr') || v.lang.includes('te'));
+      const voiceSelect = document.getElementById('voiceSelect');
+      voiceSelect.innerHTML = '';
+      voices.forEach((voice, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = `${voice.name} (${voice.lang})`;
+        voiceSelect.appendChild(option);
+      });
+    }
+
+    populateVoiceList();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = populateVoiceList;
+    }
+
+    async function translateText() {
+      const srcLang = document.getElementById("srcLang").value;
+      const tgtLang = document.getElementById("tgtLang").value;
+      const text = document.getElementById("inputText").value;
+
+      const response = await fetch("/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ src_lang: srcLang, tgt_lang: tgtLang, text: text })
+      });
+
+      const result = await response.json();
+      document.getElementById("outputText").innerText = result.translated_text || result.error;
+    }
+
+    let utterance;
+
+    function speakText() {
+      stopSpeech();
+      const text = document.getElementById("outputText").innerText;
+      if (!text.trim()) return;
+      utterance = new SpeechSynthesisUtterance(text);
+      const selectedVoice = voices[document.getElementById('voiceSelect').value];
+      utterance.voice = selectedVoice;
+      utterance.onstart = () => document.getElementById('speakingStatus').innerText = "🔊 Speaking...";
+      utterance.onend = () => document.getElementById('speakingStatus').innerText = "✅ Finished.";
+      synth.speak(utterance);
+    }
+
+    function pauseSpeech() {
+      if (synth.speaking && !synth.paused) {
+        synth.pause();
+        document.getElementById('speakingStatus').innerText = "⏸ Paused.";
+      }
+    }
+
+    function resumeSpeech() {
+      if (synth.paused) {
+        synth.resume();
+        document.getElementById('speakingStatus').innerText = "▶ Resumed.";
+      }
+    }
+
+    function stopSpeech() {
+      if (synth.speaking) {
+        synth.cancel();
+        document.getElementById('speakingStatus').innerText = "⛔ Stopped.";
+      }
+    }
+  </script>
+
+</body>
+</html>

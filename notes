@@ -1,0 +1,12 @@
+creating virtual env
+#using python
+....python -m venv myenv
+...myenv\scripts\activate  #to activate scripts
+....pip install library    #needed libraries
+
+
+
+#using conda
+python --version                  
+
+
