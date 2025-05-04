@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: translator-app
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers=1
+    plan: free
+    envVars:
+      - key: TRANSFORMERS_CACHE
+        value: /tmp/cache

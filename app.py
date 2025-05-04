@@ -10,10 +10,6 @@ app = Flask(__name__)
 LANGUAGES = {
     "en": "English",
     "fr": "French",
-    "es": "Spanish",
-    "de": "German",
-    "it": "Italian",
-    "hi": "Hindi",
     # Add more languages if needed
 }
 
